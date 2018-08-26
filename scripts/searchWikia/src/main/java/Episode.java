@@ -7,15 +7,16 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+
 public class Episode {
 	private String name;
 	private int number;
-	private String plot;
+	private String episodeURL;
 
-	public Episode(String name, int number, String plot) {
+	public Episode(String name, int number, String episodeURL) {
 		this.name = name;
 		this.number = number;
-		this.plot = plot;
+		this.episodeURL = episodeURL;
 	}
 
 	public String getName() {
@@ -23,49 +24,41 @@ public class Episode {
 	}
 
 	public String toString() {
-		return "[" + this.number + ", " + this.name + ", " + this.plot + "]";
+		return "[" + this.number + ", " + this.name + ", " + this.episodeURL + "]";
 	}
+
+	/*class method that uses the episodeURL to return the text of
+	the episode's plot, currently as a string although we will probably
+	want to feed it into a txt file or something and then do standard IO
+	for the search*/
+	public String getPlotText(){
+		String episodeURL = this.episodeURL;
+		Document doc = null;
+		System.out.println("entered getPlotText \n");
+		try {
+			doc = Jsoup.connect(episodeURL).userAgent("Mozilla/5.0").get();
+		}
+		catch (Exception e){ //the code inside the above try wouldn't compile without this catch
+			System.out.println("\n \n \n ERROR ERROR ERROR \n \n \n");
+     		doc = null;
+    	}
+		Elements plotMarker = doc.select("h2> span#Plot"); //find the plot header
+		plotMarker = plotMarker.parents(); 
+		Element plotElement = plotMarker.first().nextElementSibling(); //navigate to plot text
+		String plot = "";
+		while(plotElement.tag().getName().equals("p")){ //iterate through <p> elements until we hit the end of the plot summary
+			plot = plot + plotElement.text();
+			plotElement = plotElement.nextElementSibling();
+		}
+		return plot;
+	}
+//TODO: Generalize this so that it works on wikia other than bojack horseman... probably with the API
+
 	public static void main(String[] args) {
-		Episode joe = new Episode("Joe", 4, "blah");
-		System.out.println(joe);
+
+		/*System.out.println("Begining... \n");
+		String episodeURL = "http://bojackhorseman.wikia.com/wiki/BoJack_Horseman:_The_BoJack_Horseman_Story,_Chapter_One";
+		Episode first = new Episode("The Bojack Horseman Story",1, episodeURL);
+		System.out.println("Plot is: " + first.getPlotText());*/
 	}
 }
-
-	/*
-	public static final String WIKIA_SEARCH_URL = "https://www.fandom.wikia.com/?s=";
-	public static void main(String[] args) throws IOException {
-		//Taking search term input from console
-		Scanner scanner = new Scanner(System.in);
-		System.out.println("Please enter the search term.");
-		String searchTerm = scanner.nextLine();
-		//System.out.println("Please enter the number of results. Example: 5 10 20");
-		//int num = scanner.nextInt();
-		scanner.close();
-
-		//Format string to match search style for wikia
-		searchTerm = searchTerm.replace(' ', '+').toLowerCase();
-		//System.out.println(searchTerm);
-		
-		String searchURL = WIKIA_SEARCH_URL + searchTerm;
-		//System.out.println(searchURL);
-
-		//without proper User-Agent, we will get 403 error
-		Document doc = Jsoup.connect(searchURL).userAgent("Mozilla/5.0").get();
-		
-		//below will print HTML data, save it to a file and open in browser to compare
-		//System.out.println(doc.html());
-		
-		//If google search results HTML change the <h3 class="r" to <h3 class="r1"
-		//we need to change below accordingly
-		//Elements results = doc.select("h3.r > a");
-		Elements results = doc.select("div.top-community > a.top-community-content");
-
-		for (Element result : results) {
-			String linkHref = result.attr("href");
-			String linkText = result.text();
-			System.out.println("Text::" + linkText + ", URL::" + linkHref);
-
-		}
-	}
-	
-}*/
